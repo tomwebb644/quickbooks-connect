@@ -1,53 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Work Hours Upload</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <title>Upload Work Log</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <h1>Upload Work Log Image</h1>
-    <form id="uploadForm">
-      <input type="file" name="file" id="fileInput" accept="image/*" required />
-      <img id="preview" src="#" alt="Image Preview" style="display: none;" />
-      <button type="submit">Upload</button>
-    </form>
-    <div id="loading" style="display: none;">Processing...</div>
-    <pre id="result"></pre>
-  </div>
+    <div class="container">
+        <h1>Smart Work Hours Uploader</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-panel">
+                <label for="fileInput" class="upload-label">
+                    <span>Select Image</span>
+                    <input type="file" id="fileInput" name="file" accept="image/*">
+                </label>
+                <div class="file-info">
+                    <img id="preview" class="preview" src="" alt="Preview" hidden>
+                    <p id="fileName" class="filename">No file selected</p>
+                </div>
+            </div>
+            <button type="submit" class="submit-btn">Upload & Process</button>
+        </form>
 
-  <script>
-    const form = document.getElementById('uploadForm');
-    const preview = document.getElementById('preview');
-    const fileInput = document.getElementById('fileInput');
-    const result = document.getElementById('result');
-    const loading = document.getElementById('loading');
+        <div class="result" id="result"></div>
+    </div>
 
-    fileInput.onchange = evt => {
-      const [file] = fileInput.files;
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-      }
-    };
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const fileNameDisplay = document.getElementById('fileName');
+        const resultBox = document.getElementById('result');
 
-    form.onsubmit = async e => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      result.textContent = '';
-      loading.style.display = 'block';
+        fileInput.addEventListener('change', function() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileNameDisplay.textContent = file.name;
 
-      const res = await fetch('/upload', {
-        method: 'POST',
-        body: formData,
-      });
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.hidden = false;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fileNameDisplay.textContent = "No file selected";
+                preview.hidden = true;
+            }
+        });
 
-      const data = await res.json();
-      loading.style.display = 'none';
-      result.textContent = JSON.stringify(data, null, 2);
-    };
-  </script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            resultBox.textContent = "Processing...";
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const res = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            resultBox.textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
 </body>
 </html>
